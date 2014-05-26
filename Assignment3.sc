@@ -143,7 +143,7 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
   
   def mostRetweeted: Tweet = {
     if (remove(elem).filter(e => e.retweets >= elem.retweets).isInstanceOf[Empty]) elem 
-    else return remove(elem).filter(e => e.retweets >= elem.retweets).mostRetweeted
+    else remove(elem).filter(e => e.retweets >= elem.retweets).mostRetweeted
   }
   
   def descendingByRetweet: TweetList = new Cons(mostRetweeted, remove(mostRetweeted).descendingByRetweet)
