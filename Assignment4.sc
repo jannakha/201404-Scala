@@ -89,12 +89,14 @@ object Huffman {
     } 
     
     def walkList(testChar: Char, sublist: List[Char], used : List[Char]) : List[(Char, Int)] =  sublist match {
-      case List() => List()
-      case x :: xs => {
+      case List() => 
+        if (!used.contains(testChar)) countChar(testChar, sublist, 1) :: List()
+        else List()
+      case x :: xs => 
         if (!used.contains(testChar)) countChar(testChar, sublist, 1) :: walkList(x, xs, testChar :: used)
         else walkList(x, xs, testChar :: used)
-      }
     }
+    
     walkList(chars.head, chars.tail, List())
   }
 
@@ -118,8 +120,10 @@ object Huffman {
   /**
    * Checks whether the list `trees` contains only one single code tree.
    */
-  def singleton(trees: List[CodeTree]): Boolean = trees.length == 1
-
+  def singleton(trees: List[CodeTree]): Boolean = {
+	  //println("singleton: " + (trees.length == 1)  + " - "+ trees)
+	  trees.length == 1
+  }
   /**
    * The parameter `trees` of this function is a list of code trees ordered
    * by ascending weights.
@@ -135,9 +139,9 @@ object Huffman {
   
   //Does it keep the order as required???
   def combine(trees: List[CodeTree]): List[CodeTree] = trees match {
-    case List() => List()
+    case List() => trees
     case x :: Nil => x :: Nil
-    case x::xs => makeCodeTree(x, xs.head) :: combine(xs.tail)
+    case x::xs => makeCodeTree(x, xs.head) :: xs.tail
   }
 
   /**
@@ -157,9 +161,13 @@ object Huffman {
    *    the example invocation. Also define the return type of the `until` function.
    *  - try to find sensible parameter names for `xxx`, `yyy` and `zzz`.
    */
-  def until(test: List[CodeTree] => Boolean, func: List[CodeTree] => List[CodeTree])(trees: List[CodeTree]): List[CodeTree] = {
-    //TODO: finish him!
-    List()
+  def until(testFunc: List[CodeTree] => Boolean, combFunc: List[CodeTree] => List[CodeTree])(trees: List[CodeTree]): List[CodeTree] = trees match {
+    case List() => List()
+    case x::Nil => x :: Nil
+    case x::xs => {
+	    if (testFunc(trees)) trees
+	    else until(testFunc, combFunc)(combFunc(trees))
+    }
   }
 
   /**
@@ -168,9 +176,7 @@ object Huffman {
    * The parameter `chars` is an arbitrary text. This function extracts the character
    * frequencies from that text and creates a code tree based on them.
    */
-  def createCodeTree(chars: List[Char]): CodeTree = ???
-
-
+  def createCodeTree(chars: List[Char]): CodeTree = until(singleton, combine)(makeOrderedLeafList(times(chars))).head
 
   // Part 3: Decoding
 
@@ -179,8 +185,23 @@ object Huffman {
   /**
    * This function decodes the bit sequence `bits` using the code tree `tree` and returns
    * the resulting list of characters.
+   * 
+   * Decoding also starts at the root of the tree. Given a sequence of bits to decode, we successively read the bits, 
+   * and for each 0, we choose the left branch, and for each 1 we choose the right branch. 
+   * When we reach a leaf, we decode the corresponding character and then start again at the root of the tree. 
+   * As an example, given the Huffman tree above, the sequence of bits, 10001010 corresponds to BAC.
    */
-  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = ???
+  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = {
+    //example of pattern matching on MULTIPLE arguments
+	def walkBits(currTree: CodeTree, currBits: List[Bit]) : List[Char] = (currTree, currBits) match {
+	  case (Leaf(char, weight), List()) => char :: List()
+	  case (currTree, List()) => List()
+	  case (Leaf(char, weight), x::xs) => char :: walkBits(tree, currBits)
+	  case (Fork(left, right, chars, treeWeight), x::xs) => if (x == 0) walkBits(left, xs) else walkBits(right, xs) 
+	}
+	
+	walkBits(tree, bits)
+  }
 
   /**
    * A Huffman coding tree for the French language.
@@ -198,7 +219,10 @@ object Huffman {
   /**
    * Write a function that returns the decoded secret
    */
-  def decodedSecret: List[Char] = ???
+  def decodedSecret: List[Char] = {
+    
+    decode(frenchCode, secret)
+  }
 
 
 
