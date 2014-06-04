@@ -77,27 +77,30 @@ object Huffman {
    *       println("integer is  : "+ theInt)
    *   }
    */
-  def times(chars: List[Char]): List[(Char, Int)] = {
-    //TODO: refactor - use one helper function if possible
-    
-    def countChar(char: Char, sublist: List[Char], count: Int): (Char, Int) = sublist match {
-      case List() => (char, count)  
-      case x :: xs => {
-        if (x == char) countChar(char, xs, count+1) 
-        else countChar(char, xs, count) 
-      }
-    } 
-    
-    def walkList(testChar: Char, sublist: List[Char], used : List[Char]) : List[(Char, Int)] =  sublist match {
-      case List() => 
-        if (!used.contains(testChar)) countChar(testChar, sublist, 1) :: List()
-        else List()
-      case x :: xs => 
-        if (!used.contains(testChar)) countChar(testChar, sublist, 1) :: walkList(x, xs, testChar :: used)
-        else walkList(x, xs, testChar :: used)
+  def times(chars: List[Char]): List[(Char, Int)] = chars match {
+    case List() => List()
+    case x::xs => {
+	    //TODO: refactor - use one helper function if possible
+	    
+	    def countChar(char: Char, sublist: List[Char], count: Int): (Char, Int) = sublist match {
+	      case List() => (char, count)  
+	      case x :: xs => {
+	        if (x == char) countChar(char, xs, count+1) 
+	        else countChar(char, xs, count) 
+	      }
+	    } 
+	    
+	    def walkList(testChar: Char, sublist: List[Char], used : List[Char]) : List[(Char, Int)] =  sublist match {
+	      case List() => 
+	        if (!used.contains(testChar)) countChar(testChar, sublist, 1) :: List()
+	        else List()
+	      case x :: xs => 
+	        if (!used.contains(testChar)) countChar(testChar, sublist, 1) :: walkList(x, xs, testChar :: used)
+	        else walkList(x, xs, testChar :: used)
+	    }
+	    
+	    walkList(chars.head, chars.tail, List())
     }
-    
-    walkList(chars.head, chars.tail, List())
   }
 
   /**
@@ -198,6 +201,7 @@ object Huffman {
 	  case (_, List()) => List()
 	  case (Leaf(char, weight), x::xs) => char :: walkBits(tree, currBits)
 	  case (Fork(left, right, chars, treeWeight), x::xs) => if (x == 0) walkBits(left, xs) else walkBits(right, xs) 
+	  case (_, List(_)) => List()
 	}
 	
 	walkBits(tree, bits)
@@ -246,6 +250,7 @@ object Huffman {
         if (chars.contains(x)) encodeHelper(left)(remainingText, encodedList ::: List(0)) ::: encodeHelper(right)(remainingText, encodedList ::: List(1))
         else List()
       } 
+      case (_, List(_)) => encodedList
     }
     
     encodeHelper(tree)(text, List())
